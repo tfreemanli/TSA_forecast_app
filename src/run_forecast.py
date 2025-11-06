@@ -1,12 +1,10 @@
 import os
 import pandas as pd
 from datetime import datetime, timedelta
-from data_manager import load_sales_data, get_last_sales_date, update_sales_data, load_forecast_data, update_forecast_data, get_last_sales_date
+from data_manager import load_sales_data, update_sales_data, load_forecast_data, update_forecast_data
 from forecast_model import train_sarima, load_sarima, forecast_sarima
 from adaptive_module import train_adaptive_model, load_adaptive_model, forecast_adaptive
 from visualize import plot_forecast
-
-
 
 # 加载数据
 sales_df = load_sales_data()
@@ -80,6 +78,23 @@ forecast_df = pd.DataFrame({
 
 # 绘图输出
 plot_forecast(sales_df, forecast_df, today)
+
+print(f"System detected Sales-Last-Date：{today}")
+today_pred_sarima = float(forecast_df.loc[forecast_df["date"] == today, "sarima"].values[0])
+today_pred_adapt = float(forecast_df.loc[forecast_df["date"] == today, "adaptive"].values[0].round(2))
+print(f"SARIMA   forecast: {today_pred_sarima}")
+print(f"ADAPTIVE forecast: {today_pred_adapt}")
+
+# === 是否保存今日预测结果 ===
+choice_save = input("Do you want to save today's forecasting? (y/n): ")
+if choice_save.lower() == "y":
+    # today_pred_sarima = float(forecast_df.loc[forecast_df["date"] == today, "sarima"].values[0])
+    # today_pred_adapt = float(forecast_df.loc[forecast_df["date"] == today, "adaptive"].values[0])
+    weekday = today_date.strftime("%A")
+
+    update_forecast_data(today, weekday, today_pred_sarima, today_pred_adapt)
+    print(f"Successfully saved the forecasting of {today}.")
+
 
 # 用户输入
 choice = input(f"Would you like to input the Sales Volumn of {today}? (y/n): ")

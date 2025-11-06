@@ -31,50 +31,24 @@ def update_sales_data(date_str, sales_value):
     return df
 
 
-def _load_forecast_data():
-    """加载预测数据"""
+def update_forecast_data(date_str, weekday, sarima_val, adaptive_val):
+    """新增或更新每日预测结果"""
     path = os.path.join(DATA_DIR, "forecast_data.csv")
     if os.path.exists(path):
         df = pd.read_csv(path)
-        # 确保日期格式一致
-        df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y').dt.strftime('%d-%m-%Y')
-        return df
     else:
-        # 如果文件不存在，创建空的DataFrame
-        return pd.DataFrame(columns=['date', 'sarima', 'adaptive'])
+        df = pd.DataFrame(columns=["date", "weekday", "sarima", "adaptive"])
 
-
-def update_forecast_data(date, sarima_pred, adaptive_pred):
-    """更新预测数据"""
-    path = os.path.join(DATA_DIR, "forecast_data.csv")
-
-    # 确保日期格式为dd-MM-yyyy
-    if isinstance(date, str):
-        date_str = pd.to_datetime(date, dayfirst=True).strftime('%d-%m-%Y')
+    if date_str in df["date"].values:
+        df.loc[df["date"] == date_str, ["sarima", "adaptive"]] = [sarima_val, adaptive_val]
     else:
-        date_str = date.strftime('%d-%m-%Y')
+        new_row = pd.DataFrame({
+            "date": [date_str],
+            "weekday": [weekday],
+            "sarima": [sarima_val],
+            "adaptive": [adaptive_val]
+        })
+        df = pd.concat([df, new_row], ignore_index=True)
 
-    # 加载现有数据
-    if os.path.exists(path):
-        df = pd.read_csv(path)
-        df['date'] = pd.to_datetime(df['date'], format='%d-%m-%Y').dt.strftime('%d-%m-%Y')
-    else:
-        df = pd.DataFrame(columns=['date', 'sarima', 'adaptive'])
-
-    # 创建新数据行
-    new_data = pd.DataFrame([{
-        'date': date,
-        'sarima': round(float(sarima_pred[0]), 2),
-        'adaptive': round(float(adaptive_pred[0]), 2)
-    }])
-
-    # 如果日期已存在，则更新该行；否则添加新行
-    mask = df['date'] == date
-    if mask.any():
-        df.loc[mask, ['sarima', 'adaptive']] = new_data[['sarima', 'adaptive']].values
-    else:
-        df = pd.concat([df, new_data], ignore_index=True)
-
-    # 保存回CSV
     df.to_csv(path, index=False)
     return df
