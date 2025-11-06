@@ -2,8 +2,8 @@ import os
 import pandas as pd
 from datetime import datetime, timedelta
 from data_manager import load_sales_data, update_sales_data, load_forecast_data, update_forecast_data
-from forecast_model import train_sarima, load_sarima, forecast_sarima
-from adaptive_module import train_adaptive_model, load_adaptive_model, forecast_adaptive
+from forecast_model import train_sarima, load_sarima, forecast_sarima, update_sarima
+from adaptive_module import train_adaptive_model, load_adaptive_model, forecast_adaptive, update_adaptive_model
 from visualize import plot_forecast
 import pickle
 
@@ -15,7 +15,7 @@ def main():
         last_date = datetime.strptime(sales_df["date"].iloc[-1], "%d-%m-%Y")
         today_date = last_date + timedelta(days=1)
         today = today_date.strftime("%d-%m-%Y")
-        print(f"System detected Sales-Last-Date：{today}")
+        print(f"System detected Sales-Last-Date：{last_date}")
 
         # 加载或训练模型
         try:
@@ -83,13 +83,13 @@ def main():
         # 绘图输出
         plot_forecast(sales_df, forecast_df, today)
 
-        print(f"System detected Sales-Last-Date：{today}")
-        print(f"---------- Forecast Result ----------------")
+        #print(f"System is predicting the Sales of：")
+        print(f"\n======== {today} Forecast Result ======")
         today_pred_sarima = float(forecast_df.loc[forecast_df["date"] == today, "sarima"].values[0])
         today_pred_adapt = float(forecast_df.loc[forecast_df["date"] == today, "adaptive"].values[0].round(2))
         print(f"SARIMA   forecast: {today_pred_sarima}")
         print(f"ADAPTIVE forecast: {today_pred_adapt}")
-        print(f"-------------- Operation ------------------")
+        print(f"-------------- Save ? ------------------")
 
         # === 是否保存今日预测结果 ===
         choice_save = input("> Do you want to save today's forecasting? (y/n): ")
@@ -102,38 +102,49 @@ def main():
             print(f"Successfully saved the forecasting of {today}.")
 
 
+        print(f"\n======= {today} Actual Sale =========")
         # 用户输入
         choice = input(f"> Would you like to input the Sales Volumn of {today}? (y/n): ")
         if choice.lower() == "y":
-            val = float(input("Please type in the sales volumn: $"))
-            update_sales_data(today, val)
-            print("Sale data was updated.")
-            print("🔄 Updating SARIMA Model now ...")
+            try:
+                val = float(input("Please type in the sales volumn: $"))
+                update_sales_data(today, val)
+                print("Sale data was updated.")
 
-            # update SARIMA
-            sarima = sarima.append([val], refit=False) if hasattr(sarima, "append") else train_sarima(sales_df["sales"])
-            with open(os.path.join("..", "model", "sarima_model.pkl"), "wb") as f:
-                pickle.dump(sarima, f)
+                try:
+                    if today_date.weekday() == 6 : #if it is Sunday
+                        print("🔄 It's Sunday, Re-Trainning SARIMA Model now ...")
+                        sarima = train_sarima(sales_df["sales"])
+                    else:
+                        # update SARIMA
+                        print("🔄 Updating SARIMA Model now ...")
+                        sarima = update_sarima(sarima, val, sales_df["sales"])
 
-            print("🔄 Updating ADAPTIVE Model now ...")
-            # update ML modle
-            from adaptive_module import create_lag_features
-            recent_df = load_sales_data()
-            lag_df = create_lag_features(recent_df["sales"])
-            X, y = lag_df.drop("y", axis=1), lag_df["y"]
-            adaptive.fit(X, y)
-            with open(os.path.join("..", "model", "adaptive_model.pkl"), "wb") as f:
-                pickle.dump(adaptive, f)
+                except Exception as e:
+                    print(f"Error updating SARIMA model: {e}")
 
-            print("✅ Models updated and saved successfully.")
+                try:
+                    if today_date.weekday() == 6 : #if it is Sunday
+                        print("🔄 It's Sunday, Re-Trainning ADAPTIVE Model now ...")
+                        adaptive = train_adaptive_model(sales_df["sales"])
+                    else:
+                        # update ML modle
+                        print("🔄 Updating ADAPTIVE Model now ...")
+                        adaptive = update_adaptive_model(adaptive, sales_df["sales"], val)
+                except Exception as e:
+                    print(f"Error updating ADAPTIVE model: {e}")
+
+                # print("✅ Models updated and saved successfully.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
 
         #print("Forecasting done, please see output/sales_forecast.png")
 
         # --- 询问是否继续整个流程 ---
-        print("\n================ Again? ===================")
-        choice_loop = input("Would you like to process again?(y/n): ")
+        print("\n============ Again or Quit? ==============")
+        choice_loop = input("Would you like to conduct the Forecasting again?(y/n): ")
         if choice_loop.lower() != "y":
-            print("\n App End. Thanks for using！")
+            print("\n Good Bye, Thanks for using！")
             break
 
 if __name__ == "__main__":

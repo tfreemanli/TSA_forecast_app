@@ -8,7 +8,7 @@ def plot_forecast(actual_df, forecast_df, date):
     plt.figure(figsize=(12,6))
 
     # 过去14天的实际销售
-    past_days = -14
+    past_days = -21 # should be longer than the forecast_history below, to make sure alginment.
     plt.plot(actual_df["date"].iloc[past_days:], actual_df["sales"].iloc[past_days:],
              label="Actual", color="blue", linewidth=2)
 
