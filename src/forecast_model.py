@@ -7,7 +7,7 @@ MODEL_DIR = os.path.join("..", "model")
 
 def train_sarima(sales_series):
     """训练 SARIMA 模型"""
-    model = SARIMAX(sales_series, order=(1,1,1), seasonal_order=(1,1,1,14))
+    model = SARIMAX(sales_series, order=(1,1,1), seasonal_order=(1,1,1,7))
     model_fit = model.fit(disp=False)
     with open(os.path.join(MODEL_DIR, "sarima_model.pkl"), "wb") as f:
         pickle.dump(model_fit, f)

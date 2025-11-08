@@ -14,6 +14,10 @@ def load_sales_data():
     path = os.path.join(DATA_DIR, "sales_data.csv")
     return pd.read_csv(path)
 
+def load_training_sales_data():
+    path = os.path.join(DATA_DIR, "sales_data_4Training_31Jul2025.csv")
+    return pd.read_csv(path)
+
 def load_forecast_data():
     path = os.path.join(DATA_DIR, "forecast_data.csv")
     return pd.read_csv(path)

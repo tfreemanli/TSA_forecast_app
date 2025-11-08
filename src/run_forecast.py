@@ -52,34 +52,6 @@ def main():
             "adaptive": adaptive_pred
         })
 
-        # # 创建完整的预测数据（历史+未来）
-        # forecast_dates = pd.date_range(today - timedelta(days=21), today + timedelta(days=7), freq="D")
-        # forecast_dates_str = [d.strftime('%d-%m-%Y') for d in forecast_dates]
-        #
-        # # 创建预测DataFrame
-        # forecast_df = pd.DataFrame({
-        #     'date': forecast_dates_str
-        # })
-        #
-        # # 合并历史预测数据
-        # forecast_history = forecast_history[forecast_history['date'].isin(forecast_dates_str)]
-        # forecast_df = pd.merge(forecast_df, forecast_history, on='date', how='left')
-        #
-        # # 添加新的预测数据
-        # today_str = today.strftime('%d-%m-%Y')
-        # for i in range(7):
-        #     pred_date = (today + timedelta(days=i)).strftime('%d-%m-%Y')
-        #     if pred_date not in forecast_df['date'].values:
-        #         new_row = pd.DataFrame([{
-        #             'date': pred_date,
-        #             'sarima': round(float(sarima_pred[i]), 2) if i < len(sarima_pred) else None,
-        #             'adaptive': round(float(adaptive_pred[i]), 2) if i < len(adaptive_pred) else None
-        #         }])
-        #         forecast_df = pd.concat([forecast_df, new_row], ignore_index=True)
-        #
-        # # 按日期排序
-        # forecast_df = forecast_df.sort_values('date').reset_index(drop=True)
-
         # 绘图输出
         plot_forecast(sales_df, forecast_df, today)
 
@@ -93,6 +65,7 @@ def main():
 
         # === 是否保存今日预测结果 ===
         choice_save = input("> Do you want to save today's forecasting? (y/n): ")
+
         if choice_save.lower() == "y":
             # today_pred_sarima = float(forecast_df.loc[forecast_df["date"] == today, "sarima"].values[0])
             # today_pred_adapt = float(forecast_df.loc[forecast_df["date"] == today, "adaptive"].values[0])
@@ -105,6 +78,7 @@ def main():
         print(f"\n======= {today} Actual Sale =========")
         # 用户输入
         choice = input(f"> Would you like to input the Sales Volumn of {today}? (y/n): ")
+
         if choice.lower() == "y":
             try:
                 val = float(input("Please type in the sales volumn: $"))
@@ -138,7 +112,6 @@ def main():
             except ValueError:
                 print("Invalid input. Please enter a valid number.")
 
-        #print("Forecasting done, please see output/sales_forecast.png")
 
         # --- 询问是否继续整个流程 ---
         print("\n============ Again or Quit? ==============")
